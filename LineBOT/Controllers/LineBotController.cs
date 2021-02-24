@@ -13,6 +13,7 @@ using System.Text;
 using Newtonsoft.Json;
 using LineBOT.Models.LineDevelopers;
 using Newtonsoft.Json.Linq;
+using WebSocketClientHandle;
 
 namespace LineBOT.Controllers
 {
@@ -247,10 +248,10 @@ namespace LineBOT.Controllers
             switch (LineEvent.message.type.ToLower())
             {
                 case "text":
-                    string text = LineEvent.message.text;
+                    string text = LineEvent.message.text.ToLower();
                     //add ButtonsTemplate if user say "/Show ButtonsTemplate"
                     //判定下指令
-                    if (text.ToLower().Contains("選單"))
+                    if (text.Contains("選單"))
                     {
                         //define actions
                         //設定按鈕
@@ -271,7 +272,7 @@ namespace LineBOT.Controllers
                         responseMsgs.Add(new isRock.LineBot.TemplateMessage(tmp));
 
                     }
-                    else if (text.ToLower().Contains("輪播"))
+                    else if (text.Contains("輪播"))
                     {
                         var actions1 = new List<isRock.LineBot.TemplateActionBase>();
                         actions1.Add(new isRock.LineBot.MessageAction() { label = "actions1-1", text = "回覆文字1" });
@@ -294,15 +295,19 @@ namespace LineBOT.Controllers
                         //add TemplateMessage into responseMsgs
                         responseMsgs.Add(new isRock.LineBot.TemplateMessage(tmp));
                     }
-                    else if (text.ToLower().Contains("/changer1")) //更換RichMenu
+                    else if (text.Contains("/changer1")) //更換RichMenu
                     {
                         SwitchMenuTo("r1", LineEvent);
                     }
-                    else if (text.ToLower().Contains("/changer2")) //更換RichMenu
+                    else if (text.Contains("/changer2")) //更換RichMenu
                     {
                         SwitchMenuTo("r2", LineEvent);
                     }
-                    else if (text.ToLower().Contains("r")) //初始化設置
+                    else if (text.Contains("/fire")) //火警警報測試/fire 迴路+點位，例如/fire 002-004
+                    {
+                        WebSocketClient.SendMessage("test by Tim");
+                    }
+                    else if (text.Contains("r")) //初始化設置
                     {
                         if (isRock.LineBot.Utility.GetRichMenuList(_LineToken).richmenus.Count == 0)
                         {
@@ -310,19 +315,19 @@ namespace LineBOT.Controllers
                         }
                         SwitchMenuTo("r1", LineEvent);
                     }
-                    else if (text.ToLower().Contains("取消")) //清空用戶的選單
+                    else if (text.Contains("取消")) //清空用戶的選單
                     {
                         isRock.LineBot.Utility.UnlinkRichMenuFromUser(LineEvent.source.userId, _LineToken);
                     }
-                    else if (text.ToLower().Contains("刪除")) //刪除token選單
+                    else if (text.Contains("刪除")) //刪除token選單
                     {
                         DeleteRichMenu();
                     }
                     else
                     {
                         //add text response
-                        responseMsg = new isRock.LineBot.TextMessage($"you said : {text}");
-                        responseMsgs.Add(responseMsg);
+                        //responseMsg = new isRock.LineBot.TextMessage($"you said : {text}");
+                        //responseMsgs.Add(responseMsg);
                     }
 
                     break;

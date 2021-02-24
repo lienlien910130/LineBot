@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UserSecretsId>3505dbe8-15d9-4ac4-bd19-7cf6dc1f0289</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +13,18 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.9" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
+    <PackageReference Include="WebSocketSharp" Version="1.0.3-rc11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="IntelligentBase">
+      <HintPath>library\IntelligentBase.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="WebSocketClientHandle">
+      <HintPath>library\WebSocketClientHandle.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>

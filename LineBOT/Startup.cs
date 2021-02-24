@@ -1,19 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using LineBOT.Models.Configuration;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
+using WebSocketClientHandle.Configuration.Connects;
 
 namespace LineBOT
 {
@@ -38,10 +32,12 @@ namespace LineBOT
                 options.AddPolicy("CorsPolicy", policy =>
                 {
                     //指定網域才可進入讀取資料
-                    policy.WithOrigins("http://localhost:9528", "http://localhost:54264", "http://192.168.88.65:80")
+                    policy
+                    //.WithOrigins("http://localhost:9528", "http://localhost:54264", "http://192.168.88.65:80")
+                          .AllowAnyOrigin()
                           .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials();
+                          .AllowAnyMethod();
+                          //.AllowCredentials();
                 });
             });
             #endregion
@@ -49,6 +45,8 @@ namespace LineBOT
             #region 常用項目
             //錯誤代碼設定
             ErrorMessageOptions.Options = Configuration.GetSection("ErrorCodeSettings").Get<ErrorMessageOptions>();
+
+            WebSocketConnectOptions.Set(Configuration.GetSection(nameof(WebSocketConnectOptions)).Get<WebSocketConnectOptions>());
             #endregion
 
             services.AddControllers();
