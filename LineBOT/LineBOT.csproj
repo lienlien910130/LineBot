@@ -13,7 +13,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.9" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
-    <PackageReference Include="WebSocketSharp" Version="1.0.3-rc11" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,9 +20,8 @@
       <HintPath>library\IntelligentBase.dll</HintPath>
       <Private>true</Private>
     </Reference>
-    <Reference Include="WebSocketClientHandle">
-      <HintPath>library\WebSocketClientHandle.dll</HintPath>
-      <Private>true</Private>
+    <Reference Include="IntelligentDisasterHandling">
+      <HintPath>..\..\IntelligentPlatformV2\IntelligentSmartDisasterHhandling\bin\Debug\netcoreapp3.1\IntelligentDisasterHandling.dll</HintPath>
     </Reference>
   </ItemGroup>
 

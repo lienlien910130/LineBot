@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using WebSocketClientHandle.Configuration.Connects;
 
 namespace LineBOT
 {
@@ -46,7 +45,7 @@ namespace LineBOT
             //¿ù»~¥N½X³]©w
             ErrorMessageOptions.Options = Configuration.GetSection("ErrorCodeSettings").Get<ErrorMessageOptions>();
 
-            WebSocketConnectOptions.Set(Configuration.GetSection(nameof(WebSocketConnectOptions)).Get<WebSocketConnectOptions>());
+            //WebSocketConnectOptions.Set(Configuration.GetSection(nameof(WebSocketConnectOptions)).Get<WebSocketConnectOptions>());
             #endregion
 
             services.AddControllers();

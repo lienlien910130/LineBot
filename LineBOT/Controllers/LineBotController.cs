@@ -1,19 +1,16 @@
 ﻿using isRock.LineBot;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Net.Http.Formatting;
 using System.Threading.Tasks;
 using System.Text;
 using Newtonsoft.Json;
 using LineBOT.Models.LineDevelopers;
 using Newtonsoft.Json.Linq;
-using WebSocketClientHandle;
 
 namespace LineBOT.Controllers
 {
@@ -305,7 +302,34 @@ namespace LineBOT.Controllers
                     }
                     else if (text.Contains("/fire")) //火警警報測試/fire 迴路+點位，例如/fire 002-004
                     {
-                        WebSocketClient.SendMessage("test by Tim");
+                        text = text.Replace("/fire ", "").Trim();
+
+                        Console.WriteLine("F-" + text);
+
+                        int Address;
+                        if (text.Length < 8 || !int.TryParse(text, out Address))
+                        {
+                            responseMsg = new TextMessage($"位址請輸入8碼數字");
+                            responseMsgs.Add(responseMsg);
+                            return "";
+                        }
+
+                        using (var client = new HttpClient())
+                        {
+                            client.BaseAddress = new Uri("http://192.168.88.65:59119/");
+                            var request = new System.Net.Http.HttpRequestMessage(HttpMethod.Post, "ws");
+
+                            request.Content = new StringContent(JsonConvert.SerializeObject(text), Encoding.UTF8, "application/json");
+                            var response = client.SendAsync(request).Result;
+
+                            //判斷是否連線成功
+                            if (response.IsSuccessStatusCode)
+                            {
+                                //取回傳值
+                                //var APIResult = response.Content.ReadAsAsync<string>().Result;
+                            }
+                        };
+
                     }
                     else if (text.Contains("r")) //初始化設置
                     {
