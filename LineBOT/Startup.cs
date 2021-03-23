@@ -41,15 +41,10 @@ namespace LineBOT
             });
             #endregion
 
-            #region 常用項目
-            //錯誤代碼設定
-            ErrorMessageOptions.Options = Configuration.GetSection("ErrorCodeSettings").Get<ErrorMessageOptions>();
-
-            //WebSocketConnectOptions.Set(Configuration.GetSection(nameof(WebSocketConnectOptions)).Get<WebSocketConnectOptions>());
-            #endregion
+            services.Configure<LineBotSetting>(Configuration.GetSection("LineSettings"));
+            services.Configure<WebSocketConnectOptions>(Configuration.GetSection("WebSocketConnectOptions"));
 
             services.AddControllers();
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

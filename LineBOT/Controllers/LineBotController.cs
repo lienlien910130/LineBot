@@ -11,6 +11,8 @@ using System.Text;
 using Newtonsoft.Json;
 using LineBOT.Models.LineDevelopers;
 using Newtonsoft.Json.Linq;
+using LineBOT.Models.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace LineBOT.Controllers
 {
@@ -19,8 +21,9 @@ namespace LineBOT.Controllers
     public class LineBotController : ControllerBase
     {
         isRock.LineBot.Bot bot;
-        private string _LineToken = "rCYulcj0h/VU4c1hUBt5MiVlHhPDpsy3rm+eV8oywRWKR+b/6DNdj9nblc/EXMfyfWSwDL2CFz7wqSpHIYZlN6+CJH5+gK/RQsV7+W8dTMPQlGmF3wNhxEEkByTIrM0SDmGeabWvYuwQGYjCAQYGOgdB04t89/1O/w1cDnyilFU=";
-        private string BASE_URL = "http://61.220.23.218:59118/";
+        private string _LineToken;
+        private string BASE_URL;
+        private WebSocketConnectOptions.WebSocketConnectValue WebSocketApiServer;
         isRock.LineBot.MessageBase responseMsg = null;
 
         //message collection for response multi-message 
@@ -30,8 +33,12 @@ namespace LineBOT.Controllers
         HttpClient client = new HttpClient();
         
         [HttpPost("message")]
-        public async Task<string> Index()
+        public async Task<string> Index([FromServices] IOptions<LineBotSetting> LineSetting, [FromServices] IOptions<WebSocketConnectOptions> wsSetting)
         {
+            WebSocketApiServer = wsSetting.Value.ApiService;
+            BASE_URL = LineSetting.Value.BaseUrl;
+            _LineToken = LineSetting.Value.LineBotToken;
+
             try
             {
                 //create vot instance
@@ -70,7 +77,8 @@ namespace LineBOT.Controllers
 
                     switch (Type)
                     {
-                        case "follow":
+                        //加入好友
+                        case "follow": 
                             LineuserInfo = bot.GetUserInfo(item.source.userId);
                             if (LineUserInforesult == null)
                             {
@@ -89,6 +97,7 @@ namespace LineBOT.Controllers
                                 await InsertMemberInGR(item);
                             }
                             break;
+                        //封鎖/刪除好友
                         case "unfollow":
                             if (MemberInGRresult != null)
                             {
@@ -97,6 +106,7 @@ namespace LineBOT.Controllers
                                 await PatchMemberInGR(MemberInGRresult);
                             }
                             break;
+                        //訊息
                         case "message":
                             if (item.source.type.ToLower() == "room")
                             {
@@ -121,6 +131,7 @@ namespace LineBOT.Controllers
                             await PatchLineEvent(LineEventresult);
                             MessageResult = MessageHandle(item);
                             break;
+                        //有成員加入
                         case "memberjoined":
                             foreach (var member in item.joined.members)
                             {
@@ -145,6 +156,7 @@ namespace LineBOT.Controllers
                                 }
                             }
                             break;
+                        //有成員離開
                         case "memberleft":
                             if (MemberInGRresult != null)
                             {
@@ -302,34 +314,33 @@ namespace LineBOT.Controllers
                     }
                     else if (text.Contains("/fire")) //火警警報測試/fire 迴路+點位，例如/fire 002-004
                     {
-                        text = text.Replace("/fire ", "").Trim();
+                        text = text.Replace("/fire", "").Trim();
 
                         Console.WriteLine("F-" + text);
 
-                        int Address;
-                        if (text.Length < 8 || !int.TryParse(text, out Address))
-                        {
-                            responseMsg = new TextMessage($"位址請輸入8碼數字");
-                            responseMsgs.Add(responseMsg);
-                            return "";
-                        }
-
+                        //使用API呼叫
                         using (var client = new HttpClient())
                         {
-                            client.BaseAddress = new Uri("http://192.168.88.65:59119/");
+                            client.BaseAddress = new Uri("http://" + WebSocketApiServer.IP + ":" + WebSocketApiServer.Port + "/");
                             var request = new System.Net.Http.HttpRequestMessage(HttpMethod.Post, "ws");
 
                             request.Content = new StringContent(JsonConvert.SerializeObject(text), Encoding.UTF8, "application/json");
                             var response = client.SendAsync(request).Result;
 
                             //判斷是否連線成功
+                            var APIResult = response.Content.ReadAsAsync<string>().Result;
                             if (response.IsSuccessStatusCode)
                             {
                                 //取回傳值
-                                //var APIResult = response.Content.ReadAsAsync<string>().Result;
+                                responseMsg = new TextMessage($"結果：成功=>" + APIResult);
+                                
+                            }
+                            else
+                            {
+                                responseMsg = new TextMessage($"結果：失敗=>" + response.StatusCode);
                             }
                         };
-
+                        responseMsgs.Add(responseMsg);
                     }
                     else if (text.Contains("r")) //初始化設置
                     {
@@ -377,8 +388,12 @@ namespace LineBOT.Controllers
         }
 
         [HttpPost("webhook")]
-        public async Task<int> ChangeWebhook([FromBody] WebHook data) 
+        public int ChangeWebhook([FromBody] WebHook data, [FromServices] IOptions<LineBotSetting> LineSetting, [FromServices] IOptions<WebSocketConnectOptions> wsSetting) 
         {
+            WebSocketApiServer = wsSetting.Value.ApiService;
+            BASE_URL = LineSetting.Value.BaseUrl;
+            _LineToken = LineSetting.Value.LineBotToken;
+
             isRock.LineBot.Utility.SetWebhookEndpointURL(_LineToken, new Uri(data.webhook + "/linebot/message"));
             var ret2 = isRock.LineBot.Utility.TestWebhookEndpoint(_LineToken, new Uri(data.webhook+ "/linebot/message"));
             return ret2.statusCode;
@@ -908,13 +923,13 @@ namespace LineBOT.Controllers
                 name = "r1",
                 chatBarText = "richmenu1",
                 areas = new List<isRock.LineBot.RichMenu.Area>()
-                                    {
-                                        new isRock.LineBot.RichMenu.Area()
-                                        {
-                                            bounds = { x=0,y=0,width= 460, height=1686 },
-                                            action = new isRock.LineBot.MessageAction() { label = "/changer2", text = "/changer2" }
-                                        }
-                                    }
+                {
+                    new isRock.LineBot.RichMenu.Area()
+                    {
+                        bounds = { x=0,y=0,width= 460, height=1686 },
+                        action = new isRock.LineBot.MessageAction() { label = "/changer2", text = "/changer2" }
+                    }
+                }
             };
             //image 2500x1686 
             var one = isRock.LineBot.Utility.CreateRichMenu(richMenu1, new Uri("http://arock.blob.core.windows.net/blogdata201902/test01.png"), _LineToken);
@@ -925,13 +940,13 @@ namespace LineBOT.Controllers
                 name = "r2",
                 chatBarText = "richmenu2",
                 areas = new List<isRock.LineBot.RichMenu.Area>()
-                                    {
-                                        new isRock.LineBot.RichMenu.Area()
-                                        {
-                                            bounds = { x=2040,y=0,width=2040+460,height=1686 },
-                                            action = new isRock.LineBot.MessageAction() { label = "/changer1", text = "/changer1" }
-                                        }
-                                    }
+                {
+                    new isRock.LineBot.RichMenu.Area()
+                    {
+                        bounds = { x=2040,y=0,width=2040+460,height=1686 },
+                        action = new isRock.LineBot.MessageAction() { label = "/changer1", text = "/changer1" }
+                    }
+                }
             };
             //image 2500x1686 
             isRock.LineBot.Utility.CreateRichMenu(richMenu2, new Uri("http://arock.blob.core.windows.net/blogdata201902/test01.png"), _LineToken);
